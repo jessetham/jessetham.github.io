@@ -1,0 +1,5 @@
+baseURL = 'https://jtham.dev/'
+languageCode = 'en-us'
+title = 'jtham.dev'
+theme = 'papermod'
+publishDir = 'docs'
