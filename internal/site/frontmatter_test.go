@@ -65,3 +65,63 @@ func TestSplitFrontmatter(t *testing.T) {
 		})
 	}
 }
+
+func TestParseFrontmatter(t *testing.T) {
+	cases := []struct {
+		name      string
+		in        string
+		wantTitle string
+		wantDate  string // YYYY-MM-DD; "" if error expected
+		wantErr   string // substring; "" means no error
+	}{
+		{
+			name:      "happy path",
+			in:        "title: Hello, world\ndate: 2026-05-22\n",
+			wantTitle: "Hello, world",
+			wantDate:  "2026-05-22",
+		},
+		{
+			name:    "missing title",
+			in:      "date: 2026-05-22\n",
+			wantErr: "title",
+		},
+		{
+			name:    "empty title",
+			in:      "title: \"\"\ndate: 2026-05-22\n",
+			wantErr: "title",
+		},
+		{
+			name:    "missing date",
+			in:      "title: Hello\n",
+			wantErr: "date",
+		},
+		{
+			name:    "unparseable date",
+			in:      "title: Hello\ndate: yesterday\n",
+			wantErr: "date",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			title, date, err := parseFrontmatter([]byte(tc.in))
+			if tc.wantErr != "" {
+				if err == nil {
+					t.Fatalf("want error containing %q, got nil", tc.wantErr)
+				}
+				if !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("error %q does not contain %q", err.Error(), tc.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if title != tc.wantTitle {
+				t.Errorf("title: got %q want %q", title, tc.wantTitle)
+			}
+			if got := date.Format("2006-01-02"); got != tc.wantDate {
+				t.Errorf("date: got %q want %q", got, tc.wantDate)
+			}
+		})
+	}
+}

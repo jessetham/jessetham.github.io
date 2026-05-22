@@ -3,6 +3,10 @@ package site
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 // splitFrontmatter splits raw file bytes into (frontmatter, body).
@@ -22,4 +26,25 @@ func splitFrontmatter(data []byte) (fm, body []byte, err error) {
 	body = rest[idx+len("\n---"):]
 	body = bytes.TrimPrefix(body, []byte("\n"))
 	return fm, body, nil
+}
+
+type rawFrontmatter struct {
+	Title string    `yaml:"title"`
+	Date  time.Time `yaml:"date"`
+}
+
+func parseFrontmatter(fm []byte) (title string, date time.Time, err error) {
+	var raw rawFrontmatter
+	if err := yaml.Unmarshal(fm, &raw); err != nil {
+		// yaml.v3 reports unparseable timestamps here.
+		// When a timestamp is unparseable, include "date" in the error.
+		return "", time.Time{}, fmt.Errorf("invalid frontmatter date: %w", err)
+	}
+	if raw.Title == "" {
+		return "", time.Time{}, fmt.Errorf("frontmatter: title is required")
+	}
+	if raw.Date.IsZero() {
+		return "", time.Time{}, fmt.Errorf("frontmatter: date is required (YYYY-MM-DD)")
+	}
+	return raw.Title, raw.Date, nil
 }
