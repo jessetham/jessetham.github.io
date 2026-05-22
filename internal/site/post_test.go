@@ -1,6 +1,10 @@
 package site
 
-import "testing"
+import (
+	"strings"
+	"testing"
+	"time"
+)
 
 func TestSlugFromPath(t *testing.T) {
 	cases := []struct {
@@ -17,5 +21,30 @@ func TestSlugFromPath(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("slugFromPath(%q) = %q, want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+func TestSortPosts(t *testing.T) {
+	date := func(s string) time.Time {
+		d, err := time.Parse("2006-01-02", s)
+		if err != nil {
+			t.Fatalf("bad date in test: %v", err)
+		}
+		return d
+	}
+	posts := []Post{
+		{Slug: "older", Date: date("2026-01-01")},
+		{Slug: "tied-b", Date: date("2026-05-22")},
+		{Slug: "newer", Date: date("2026-06-01")},
+		{Slug: "tied-a", Date: date("2026-05-22")},
+	}
+	sortPosts(posts)
+	got := make([]string, len(posts))
+	for i, p := range posts {
+		got[i] = p.Slug
+	}
+	want := []string{"newer", "tied-a", "tied-b", "older"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("sort order: got %v want %v", got, want)
 	}
 }
