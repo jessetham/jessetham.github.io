@@ -1,0 +1,11 @@
+{{define "title"}}Blog{{end}}
+{{define "body"}}
+  <ul>
+  {{range .}}
+    <li>
+      <a href="/posts/{{.Slug}}/">{{.Title}}</a>
+      <time datetime="{{.Date.Format "2006-01-02"}}">{{.Date.Format "Jan 2, 2006"}}</time>
+    </li>
+  {{end}}
+  </ul>
+{{end}}
