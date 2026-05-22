@@ -1,3 +1,5 @@
 body { font-family: system-ui, sans-serif; max-width: 38rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
 header a { text-decoration: none; }
+header .brand { font-weight: 600; font-size: 1.1rem; margin-right: 0.75rem; color: #111; }
 article time { color: #666; }
+li time { color: #666; font-size: 0.9em; }
