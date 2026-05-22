@@ -2,10 +2,12 @@ package site
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type Config struct {
@@ -35,6 +37,64 @@ func copyStatic(src, dst string) error {
 		}
 		return copyFile(path, target)
 	})
+}
+
+func Build(cfg Config) error {
+	start := time.Now()
+
+	if err := os.RemoveAll(cfg.OutDir); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(cfg.OutDir, 0755); err != nil {
+		return err
+	}
+
+	posts, err := LoadPosts(filepath.Join(cfg.ContentDir, "posts"))
+	if err != nil {
+		return err
+	}
+
+	postTmpl, indexTmpl, err := parseTemplates(cfg.TemplatesDir)
+	if err != nil {
+		return err
+	}
+
+	for _, p := range posts {
+		dir := filepath.Join(cfg.OutDir, "posts", p.Slug)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+		f, err := os.Create(filepath.Join(dir, "index.html"))
+		if err != nil {
+			return err
+		}
+		if err := renderPost(f, postTmpl, p); err != nil {
+			f.Close()
+			return fmt.Errorf("render post %s: %w", p.Slug, err)
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+	}
+
+	idx, err := os.Create(filepath.Join(cfg.OutDir, "index.html"))
+	if err != nil {
+		return err
+	}
+	if err := renderIndex(idx, indexTmpl, posts); err != nil {
+		idx.Close()
+		return fmt.Errorf("render index: %w", err)
+	}
+	if err := idx.Close(); err != nil {
+		return err
+	}
+
+	if err := copyStatic(cfg.StaticDir, cfg.OutDir); err != nil {
+		return err
+	}
+
+	fmt.Printf("built %d posts in %s\n", len(posts), time.Since(start).Round(time.Millisecond))
+	return nil
 }
 
 func copyFile(src, dst string) error {
