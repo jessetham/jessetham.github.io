@@ -1,6 +1,13 @@
 package site
 
 import (
+	"context"
+	"io"
+	"net"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -110,4 +117,91 @@ func TestDebounce_CloseReturns(t *testing.T) {
 	case <-time.After(time.Second):
 		t.Fatal("debounce did not return after channel close")
 	}
+}
+
+// serveFixture lays a tiny site (1 post, real templates, 1 static file)
+// into root and returns a Config pointing at it.
+func serveFixture(t *testing.T, root string) Config {
+	t.Helper()
+
+	for _, d := range []string{"content/posts", "templates", "static"} {
+		if err := os.MkdirAll(filepath.Join(root, d), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	must := func(path, contents string) {
+		if err := os.WriteFile(filepath.Join(root, path), []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	must("content/posts/hello.md", "---\ntitle: Hello\ndate: 2026-05-22\n---\nhi\n")
+	must("static/style.css", "body{}\n")
+
+	for _, name := range []string{"base.html", "post.html", "index.html"} {
+		src, err := os.ReadFile(filepath.Join("..", "..", "templates", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		must("templates/"+name, string(src))
+	}
+
+	return Config{
+		ContentDir:   filepath.Join(root, "content"),
+		TemplatesDir: filepath.Join(root, "templates"),
+		StaticDir:    filepath.Join(root, "static"),
+		OutDir:       filepath.Join(root, "public"),
+	}
+}
+
+func TestServe_ServesIndex(t *testing.T) {
+	cfg := serveFixture(t, t.TempDir())
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+	go func() { errCh <- serveOnListener(ctx, cfg, listener) }()
+
+	url := "http://" + listener.Addr().String() + "/"
+	resp, err := httpGetWithRetry(t, url, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if !strings.Contains(string(body), "Hello") {
+		t.Errorf("response body does not contain post title; got: %s", body)
+	}
+
+	cancel()
+	select {
+	case err := <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			t.Errorf("serveOnListener returned: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("serveOnListener did not return within 2s after ctx cancel")
+	}
+}
+
+func httpGetWithRetry(t *testing.T, url string, timeout time.Duration) (*http.Response, error) {
+	t.Helper()
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for time.Now().Before(deadline) {
+		resp, err := http.Get(url)
+		if err == nil {
+			return resp, nil
+		}
+		lastErr = err
+		time.Sleep(20 * time.Millisecond)
+	}
+	return nil, lastErr
 }
