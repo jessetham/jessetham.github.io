@@ -33,7 +33,7 @@ func sortPosts(posts []Post) {
 	})
 }
 
-func LoadPost(path string) (Post, error) {
+func loadPost(path string) (Post, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return Post{}, err
@@ -58,7 +58,7 @@ func LoadPost(path string) (Post, error) {
 	}, nil
 }
 
-func LoadPosts(dir string) ([]Post, error) {
+func loadPosts(dir string) ([]Post, error) {
 	var posts []Post
 	seen := map[string]string{} // slug -> path of first occurrence
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
@@ -71,7 +71,7 @@ func LoadPosts(dir string) ([]Post, error) {
 		if filepath.Ext(path) != ".md" {
 			return nil
 		}
-		p, err := LoadPost(path)
+		p, err := loadPost(path)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}

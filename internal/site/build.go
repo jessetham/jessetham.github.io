@@ -49,7 +49,7 @@ func Build(cfg Config) error {
 		return err
 	}
 
-	posts, err := LoadPosts(filepath.Join(cfg.ContentDir, "posts"))
+	posts, err := loadPosts(filepath.Join(cfg.ContentDir, "posts"))
 	if err != nil {
 		return err
 	}

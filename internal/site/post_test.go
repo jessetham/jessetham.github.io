@@ -59,9 +59,9 @@ func TestLoadPost(t *testing.T) {
 		t.Fatalf("write fixture: %v", err)
 	}
 
-	p, err := LoadPost(path)
+	p, err := loadPost(path)
 	if err != nil {
-		t.Fatalf("LoadPost: %v", err)
+		t.Fatalf("loadPost: %v", err)
 	}
 	if p.Slug != "hello-world" {
 		t.Errorf("slug: got %q want %q", p.Slug, "hello-world")
@@ -83,7 +83,7 @@ func TestLoadPost_BadFrontmatter(t *testing.T) {
 	if err := os.WriteFile(path, []byte("just body, no frontmatter\n"), 0644); err != nil {
 		t.Fatalf("write fixture: %v", err)
 	}
-	if _, err := LoadPost(path); err == nil {
+	if _, err := loadPost(path); err == nil {
 		t.Fatal("expected error, got nil")
 	}
 }
@@ -103,9 +103,9 @@ func TestLoadPosts_SortsAndIgnoresNonMarkdown(t *testing.T) {
 	write("b.md", "---\ntitle: B\ndate: 2026-06-01\n---\nB\n")
 	write("README.txt", "ignored")
 
-	posts, err := LoadPosts(dir)
+	posts, err := loadPosts(dir)
 	if err != nil {
-		t.Fatalf("LoadPosts: %v", err)
+		t.Fatalf("loadPosts: %v", err)
 	}
 	if len(posts) != 2 {
 		t.Fatalf("got %d posts, want 2", len(posts))
@@ -130,7 +130,7 @@ func TestLoadPosts_DuplicateSlugError(t *testing.T) {
 	write("2024/hello.md")
 	write("2025/hello.md")
 
-	_, err := LoadPosts(dir)
+	_, err := loadPosts(dir)
 	if err == nil {
 		t.Fatal("expected duplicate-slug error, got nil")
 	}
