@@ -81,9 +81,10 @@ Post body in markdown goes here.
 Rules:
 
 - A `.md` file without frontmatter is a hard error (so a post is never accidentally published with no title or date).
-- `date` is parsed as plain `YYYY-MM-DD`; no time-of-day, no timezones.
+- `date` is parsed as plain `YYYY-MM-DD`; no time-of-day, no timezones. Stored as `time.Date(y, m, d, 0, 0, 0, 0, time.UTC)`.
 - `Slug` is derived from filename (without `.md`, lowercased). No frontmatter `slug` override.
 - Posts are sorted by `Date` descending; ties broken by `Slug` ascending for stable ordering.
+- Unknown frontmatter keys are silently ignored (standard `yaml.v3` behavior). Only `title` and `date` are recognized.
 
 ## Templates
 
@@ -141,7 +142,7 @@ Loading: `template.ParseFiles("templates/base.html", "templates/<page>.html")` p
 
 `site.Build(cfg)` runs these steps in order. Any error aborts the build and is returned.
 
-1. **Wipe `public/`** — remove and recreate the directory so stale files from renamed/deleted posts do not linger.
+1. **Wipe `public/`** — `os.RemoveAll` the directory then recreate it, so stale files from renamed/deleted posts do not linger. Includes hidden files.
 2. **Walk `content/posts/`** — collect every `*.md` file. Each becomes a `Post` via `LoadPost(path)`:
    - Read file.
    - Split frontmatter from body (must open with `---` at the very top; error if missing).
@@ -151,7 +152,7 @@ Loading: `template.ParseFiles("templates/base.html", "templates/<page>.html")` p
 3. **Sort posts** — `Date` descending, `Slug` ascending tiebreak.
 4. **Render each post** — for every post, render `base.html`+`post.html` to `public/posts/<slug>/index.html`. `MkdirAll` for the directory.
 5. **Render index** — `base.html`+`index.html` with `[]Post` → `public/index.html`.
-6. **Copy `static/` → `public/`** — preserve relative paths. If `static/` does not exist, skip silently.
+6. **Copy `static/` → `public/`** — preserve relative paths. If `static/` does not exist, skip silently. Runs *after* page rendering, so on a path collision the static file overwrites the generated one (deterministic, last-writer-wins).
 7. **Print summary** — `built N posts in <duration>` to stdout.
 
 Implementation choices:
