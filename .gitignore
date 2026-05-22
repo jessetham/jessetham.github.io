@@ -1,0 +1,14 @@
+# Build output
+/public/
+
+# Compiled binary
+/blog
+
+# Go test artefacts
+*.test
+*.out
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
