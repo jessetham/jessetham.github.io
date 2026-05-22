@@ -1,7 +1,9 @@
 package site
 
 import (
+	"fmt"
 	"html/template"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
@@ -54,4 +56,35 @@ func LoadPost(path string) (Post, error) {
 		Date:  date,
 		Body:  template.HTML(html),
 	}, nil
+}
+
+func LoadPosts(dir string) ([]Post, error) {
+	var posts []Post
+	seen := map[string]string{} // slug -> path of first occurrence
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if filepath.Ext(path) != ".md" {
+			return nil
+		}
+		p, err := LoadPost(path)
+		if err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+		if prev, ok := seen[p.Slug]; ok {
+			return fmt.Errorf("duplicate slug %q: %s and %s", p.Slug, prev, path)
+		}
+		seen[p.Slug] = path
+		posts = append(posts, p)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	sortPosts(posts)
+	return posts, nil
 }

@@ -87,3 +87,58 @@ func TestLoadPost_BadFrontmatter(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 }
+
+func TestLoadPosts_SortsAndIgnoresNonMarkdown(t *testing.T) {
+	dir := t.TempDir()
+	write := func(rel, body string) {
+		full := filepath.Join(dir, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		if err := os.WriteFile(full, []byte(body), 0644); err != nil {
+			t.Fatalf("write %s: %v", rel, err)
+		}
+	}
+	write("a.md", "---\ntitle: A\ndate: 2026-01-01\n---\nA\n")
+	write("b.md", "---\ntitle: B\ndate: 2026-06-01\n---\nB\n")
+	write("README.txt", "ignored")
+
+	posts, err := LoadPosts(dir)
+	if err != nil {
+		t.Fatalf("LoadPosts: %v", err)
+	}
+	if len(posts) != 2 {
+		t.Fatalf("got %d posts, want 2", len(posts))
+	}
+	if posts[0].Slug != "b" || posts[1].Slug != "a" {
+		t.Errorf("order: got %q,%q want b,a", posts[0].Slug, posts[1].Slug)
+	}
+}
+
+func TestLoadPosts_DuplicateSlugError(t *testing.T) {
+	dir := t.TempDir()
+	write := func(rel string) {
+		full := filepath.Join(dir, rel)
+		if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+			t.Fatalf("mkdir: %v", err)
+		}
+		body := "---\ntitle: t\ndate: 2026-05-22\n---\nx\n"
+		if err := os.WriteFile(full, []byte(body), 0644); err != nil {
+			t.Fatalf("write %s: %v", rel, err)
+		}
+	}
+	write("2024/hello.md")
+	write("2025/hello.md")
+
+	_, err := LoadPosts(dir)
+	if err == nil {
+		t.Fatal("expected duplicate-slug error, got nil")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "hello") {
+		t.Errorf("error should name the slug, got %q", msg)
+	}
+	if !strings.Contains(msg, "2024/hello.md") || !strings.Contains(msg, "2025/hello.md") {
+		t.Errorf("error should list both paths, got %q", msg)
+	}
+}
