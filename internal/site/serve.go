@@ -3,6 +3,9 @@ package site
 import (
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 // shouldWatch returns true if path should trigger a rebuild.
@@ -21,4 +24,30 @@ func shouldWatch(path, outDir string) bool {
 		}
 	}
 	return true
+}
+
+// debounce reads from in and calls fire after wait has passed since the
+// most recent event. Returns when in is closed.
+func debounce(in <-chan fsnotify.Event, wait time.Duration, fire func()) {
+	var timer *time.Timer
+	var timerCh <-chan time.Time
+	for {
+		select {
+		case _, ok := <-in:
+			if !ok {
+				if timer != nil {
+					timer.Stop()
+				}
+				return
+			}
+			if timer != nil {
+				timer.Stop()
+			}
+			timer = time.NewTimer(wait)
+			timerCh = timer.C
+		case <-timerCh:
+			timerCh = nil
+			fire()
+		}
+	}
 }
