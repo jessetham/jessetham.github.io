@@ -2,6 +2,9 @@ package site
 
 import (
 	"bytes"
+	"html/template"
+	"io"
+	"path/filepath"
 
 	"github.com/yuin/goldmark"
 )
@@ -16,4 +19,32 @@ func markdownToHTML(src []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// parseTemplates parses the two template pairs (base+post, base+index) once.
+// Callers reuse the returned *Template across many ExecuteTemplate calls.
+func parseTemplates(templatesDir string) (postTmpl, indexTmpl *template.Template, err error) {
+	postTmpl, err = template.ParseFiles(
+		filepath.Join(templatesDir, "base.html"),
+		filepath.Join(templatesDir, "post.html"),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	indexTmpl, err = template.ParseFiles(
+		filepath.Join(templatesDir, "base.html"),
+		filepath.Join(templatesDir, "index.html"),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return postTmpl, indexTmpl, nil
+}
+
+func renderPost(w io.Writer, t *template.Template, p Post) error {
+	return t.ExecuteTemplate(w, "base.html", p)
+}
+
+func renderIndex(w io.Writer, t *template.Template, posts []Post) error {
+	return t.ExecuteTemplate(w, "base.html", posts)
 }
