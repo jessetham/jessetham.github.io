@@ -2,6 +2,7 @@ package site
 
 import (
 	"html/template"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -28,4 +29,29 @@ func sortPosts(posts []Post) {
 		}
 		return posts[i].Slug < posts[j].Slug
 	})
+}
+
+func LoadPost(path string) (Post, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return Post{}, err
+	}
+	fm, body, err := splitFrontmatter(data)
+	if err != nil {
+		return Post{}, err
+	}
+	title, date, err := parseFrontmatter(fm)
+	if err != nil {
+		return Post{}, err
+	}
+	html, err := markdownToHTML(body)
+	if err != nil {
+		return Post{}, err
+	}
+	return Post{
+		Slug:  slugFromPath(path),
+		Title: title,
+		Date:  date,
+		Body:  template.HTML(html),
+	}, nil
 }

@@ -1,6 +1,8 @@
 package site
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -46,5 +48,42 @@ func TestSortPosts(t *testing.T) {
 	want := []string{"newer", "tied-a", "tied-b", "older"}
 	if strings.Join(got, ",") != strings.Join(want, ",") {
 		t.Errorf("sort order: got %v want %v", got, want)
+	}
+}
+
+func TestLoadPost(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "Hello-World.md")
+	contents := "---\ntitle: Hello\ndate: 2026-05-22\n---\n# Heading\n\nBody.\n"
+	if err := os.WriteFile(path, []byte(contents), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	p, err := LoadPost(path)
+	if err != nil {
+		t.Fatalf("LoadPost: %v", err)
+	}
+	if p.Slug != "hello-world" {
+		t.Errorf("slug: got %q want %q", p.Slug, "hello-world")
+	}
+	if p.Title != "Hello" {
+		t.Errorf("title: got %q want %q", p.Title, "Hello")
+	}
+	if got := p.Date.Format("2006-01-02"); got != "2026-05-22" {
+		t.Errorf("date: got %q want %q", got, "2026-05-22")
+	}
+	if !strings.Contains(string(p.Body), "<h1>Heading</h1>") {
+		t.Errorf("body should contain <h1>Heading</h1>, got %q", p.Body)
+	}
+}
+
+func TestLoadPost_BadFrontmatter(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "no-fm.md")
+	if err := os.WriteFile(path, []byte("just body, no frontmatter\n"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	if _, err := LoadPost(path); err == nil {
+		t.Fatal("expected error, got nil")
 	}
 }
