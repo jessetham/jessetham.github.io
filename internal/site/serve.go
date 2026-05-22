@@ -2,7 +2,9 @@ package site
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +15,8 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 )
+
+const debounceWait = 100 * time.Millisecond
 
 // shouldWatch returns true if path should trigger a rebuild.
 // Hidden files (any component starting with '.') and paths inside outDir
@@ -57,6 +61,54 @@ func serveOnListener(ctx context.Context, cfg Config, listener net.Listener) err
 		fileSrv.ServeHTTP(w, r)
 	})
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	for _, dir := range []string{cfg.ContentDir, cfg.TemplatesDir, cfg.StaticDir} {
+		if err := addDirsRecursive(watcher, dir); err != nil {
+			return err
+		}
+	}
+
+	filtered := make(chan fsnotify.Event, 64)
+	go func() {
+		defer close(filtered)
+		for {
+			select {
+			case ev, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				if ev.Op&fsnotify.Create != 0 {
+					if info, statErr := os.Stat(ev.Name); statErr == nil && info.IsDir() {
+						_ = watcher.Add(ev.Name)
+					}
+				}
+				if shouldWatch(ev.Name, cfg.OutDir) {
+					select {
+					case filtered <- ev:
+					default:
+					}
+				}
+			case werr := <-watcher.Errors:
+				fmt.Fprintln(os.Stderr, "watcher error:", werr)
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	go debounce(filtered, debounceWait, func() {
+		mu.Lock()
+		defer mu.Unlock()
+		if err := Build(cfg); err != nil {
+			fmt.Fprintln(os.Stderr, "rebuild failed:", err)
+		}
+	})
+
 	srv := &http.Server{Handler: handler}
 
 	fmt.Printf("serving %s at http://%s  (watching %s, %s, %s)\n",
@@ -79,6 +131,26 @@ func serveOnListener(ctx context.Context, cfg Config, listener net.Listener) err
 		}
 		return err
 	}
+}
+
+// addDirsRecursive registers root and every subdirectory beneath it with the
+// watcher. Missing roots are skipped silently (static/ may legitimately not
+// exist).
+func addDirsRecursive(w *fsnotify.Watcher, root string) error {
+	if _, err := os.Stat(root); errors.Is(err, fs.ErrNotExist) {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return w.Add(path)
+		}
+		return nil
+	})
 }
 
 // debounce reads from in and calls fire after wait has passed since the

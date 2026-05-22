@@ -205,3 +205,52 @@ func httpGetWithRetry(t *testing.T, url string, timeout time.Duration) (*http.Re
 	}
 	return nil, lastErr
 }
+
+func TestServe_RebuildsOnContentChange(t *testing.T) {
+	root := t.TempDir()
+	cfg := serveFixture(t, root)
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	errCh := make(chan error, 1)
+	go func() { errCh <- serveOnListener(ctx, cfg, listener) }()
+
+	url := "http://" + listener.Addr().String() + "/posts/hello/"
+	resp, err := httpGetWithRetry(t, url, time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if !strings.Contains(string(body), "Hello") {
+		t.Fatalf("initial body missing original title: %s", body)
+	}
+
+	postPath := filepath.Join(cfg.ContentDir, "posts", "hello.md")
+	if err := os.WriteFile(postPath,
+		[]byte("---\ntitle: Updated\ndate: 2026-05-22\n---\nbye\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		resp, err := http.Get(url)
+		if err != nil {
+			t.Fatal(err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if strings.Contains(string(body), "Updated") {
+			cancel()
+			<-errCh
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Fatal("server did not pick up the new title within 3s")
+}
