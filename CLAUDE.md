@@ -1,14 +1,14 @@
-# CLAUDE.md
+# blog
 
-Guidance for Claude Code working in this repository.
+This repo contains everything needed to power my personal blog: the
+content itself and a minimal Go static site generator that converts
+markdown posts with YAML frontmatter into a static HTML site under
+`public/`.
 
-## What this is
-
-A minimal Go static site generator for a personal blog. Markdown posts with
-YAML frontmatter become a static HTML site under `public/`.
-
-The full design lives in `docs/superpowers/specs/`. Read the relevant spec
-before non-trivial changes.
+This file is the single source of context for both humans and agents
+working on the repo. Design specs for each feature live in
+`docs/superpowers/specs/`; read the relevant spec before non-trivial
+changes.
 
 ## CLI
 
