@@ -6,12 +6,23 @@ import (
 	"io"
 	"path/filepath"
 
+	chromahtml "github.com/alecthomas/chroma/v2/formatters/html"
 	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting/v2"
 )
 
 // md is a single shared markdown instance. Goldmark is safe for concurrent use,
 // and a personal blog has no need for per-call configuration.
-var md = goldmark.New()
+//
+// Fenced code blocks are syntax-highlighted at build time with class-based
+// output; the colours live in static/highlight.css (see cmd/genhl).
+var md = goldmark.New(
+	goldmark.WithExtensions(
+		highlighting.NewHighlighting(
+			highlighting.WithFormatOptions(chromahtml.WithClasses(true)),
+		),
+	),
+)
 
 func markdownToHTML(src []byte) ([]byte, error) {
 	var buf bytes.Buffer

@@ -66,14 +66,34 @@ the build with the offending file path.
 Posts sort by date descending; slug-ascending breaks ties. Duplicate slugs
 fail the build.
 
+## Syntax highlighting
+
+Fenced code blocks with a language hint (` ```go `) are highlighted at
+build time by the `goldmark-highlighting` (chroma) extension. Output is
+class-based — no inline styles, no client-side JS. Indented code blocks and
+inline `code` are left untouched and keep the plain `--code-bg` styling.
+
+The colours live in `static/highlight.css`, a generated file holding the
+chroma `github` theme at the top level and `github-dark` inside a
+`prefers-color-scheme: dark` media query. Regenerate it (e.g. to change
+themes) with:
+
+```bash
+go run ./cmd/genhl > static/highlight.css
+```
+
+Edit the style names in `cmd/genhl/main.go` to pick different themes; run
+`go run ./cmd/genhl` with no redirect to preview.
+
 ## Layout
 
 ```
 cmd/blog/        CLI entrypoint
+cmd/genhl/       Regenerates static/highlight.css (dev tool, run manually)
 internal/site/   Build pipeline, frontmatter parser, renderer, serve
 content/posts/   Source markdown
 templates/       html/template files: base.html + post.html + index.html
-static/          Files copied verbatim into public/ (optional)
+static/          Files copied verbatim into public/ (style.css, highlight.css, fonts)
 public/          Build output, gitignored
 docs/superpowers/specs/   Design specs for each feature
 docs/superpowers/plans/   Implementation plans
