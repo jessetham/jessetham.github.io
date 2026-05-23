@@ -1,7 +1,6 @@
-{{define "title"}}Jesse Tham{{end}}
 {{define "body"}}
   <ul>
-  {{range .}}
+  {{range .Posts}}
     <li>
       <a href="/posts/{{.Slug}}/">{{.Title}}</a>
       <time datetime="{{.Date.Format "2006-01-02"}}">{{.Date.Format "Jan 2, 2006"}}</time>

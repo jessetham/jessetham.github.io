@@ -15,6 +15,7 @@ type Config struct {
 	TemplatesDir string
 	StaticDir    string
 	OutDir       string
+	BaseURL      string
 }
 
 func copyStatic(src, dst string) error {
@@ -41,6 +42,7 @@ func copyStatic(src, dst string) error {
 
 func Build(cfg Config) error {
 	start := time.Now()
+	cfg.BaseURL = normalizeBaseURL(cfg.BaseURL)
 
 	if err := os.RemoveAll(cfg.OutDir); err != nil {
 		return err
@@ -68,7 +70,7 @@ func Build(cfg Config) error {
 		if err != nil {
 			return err
 		}
-		if err := renderPost(f, postTmpl, p); err != nil {
+		if err := renderPost(f, postTmpl, cfg, p); err != nil {
 			f.Close()
 			return fmt.Errorf("render post %s: %w", p.Slug, err)
 		}
@@ -81,12 +83,22 @@ func Build(cfg Config) error {
 	if err != nil {
 		return err
 	}
-	if err := renderIndex(idx, indexTmpl, posts); err != nil {
+	if err := renderIndex(idx, indexTmpl, cfg, posts); err != nil {
 		idx.Close()
 		return fmt.Errorf("render index: %w", err)
 	}
 	if err := idx.Close(); err != nil {
 		return err
+	}
+
+	if err := writeSitemap(cfg, posts); err != nil {
+		return fmt.Errorf("write sitemap: %w", err)
+	}
+	if err := writeRobots(cfg); err != nil {
+		return fmt.Errorf("write robots.txt: %w", err)
+	}
+	if err := writeFeed(cfg, posts); err != nil {
+		return fmt.Errorf("write feed: %w", err)
 	}
 
 	if err := copyStatic(cfg.StaticDir, cfg.OutDir); err != nil {

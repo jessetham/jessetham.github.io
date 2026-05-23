@@ -41,10 +41,72 @@ func parseTemplates(templatesDir string) (postTmpl, indexTmpl *template.Template
 	return postTmpl, indexTmpl, nil
 }
 
-func renderPost(w io.Writer, t *template.Template, p Post) error {
-	return t.ExecuteTemplate(w, "base.html", p)
+// pageData is the single view-model passed to base.html for every page. Post
+// is non-nil on post pages; Posts is populated on the index.
+type pageData struct {
+	BaseURL     string
+	SiteTitle   string
+	Author      string
+	Title       string
+	Description string
+	Canonical   string
+	OGType      string
+	Post        *Post
+	Posts       []Post
+	JSONLD      template.HTML
 }
 
-func renderIndex(w io.Writer, t *template.Template, posts []Post) error {
-	return t.ExecuteTemplate(w, "base.html", posts)
+func newPostPage(cfg Config, p Post) pageData {
+	canonical := postURL(cfg, p)
+	author := map[string]any{"@type": "Person", "name": siteAuthor}
+	ld := map[string]any{
+		"@context":      "https://schema.org",
+		"@type":         "BlogPosting",
+		"headline":      p.Title,
+		"datePublished": p.Date.Format("2006-01-02"),
+		"url":           canonical,
+		"author":        author,
+	}
+	if p.Description != "" {
+		ld["description"] = p.Description
+	}
+	return pageData{
+		BaseURL:     cfg.BaseURL,
+		SiteTitle:   siteTitle,
+		Author:      siteAuthor,
+		Title:       p.Title + " — " + siteTitle,
+		Description: p.Description,
+		Canonical:   canonical,
+		OGType:      "article",
+		Post:        &p,
+		JSONLD:      jsonLDScript(ld),
+	}
+}
+
+func newIndexPage(cfg Config, posts []Post) pageData {
+	ld := map[string]any{
+		"@context": "https://schema.org",
+		"@type":    "WebSite",
+		"name":     siteTitle,
+		"url":      cfg.BaseURL + "/",
+	}
+	return pageData{
+		BaseURL:     cfg.BaseURL,
+		SiteTitle:   siteTitle,
+		Author:      siteAuthor,
+		Title:       siteTitle,
+		Description: siteDescription,
+		Canonical:   cfg.BaseURL + "/",
+		OGType:      "website",
+		Posts:       posts,
+		JSONLD:      jsonLDScript(ld),
+	}
+}
+
+func renderPost(w io.Writer, t *template.Template, cfg Config, p Post) error {
+	return t.ExecuteTemplate(w, "base.html", newPostPage(cfg, p))
+}
+
+func renderIndex(w io.Writer, t *template.Template, cfg Config, posts []Post) error {
+	return t.ExecuteTemplate(w, "base.html", newIndexPage(cfg, posts))
 }

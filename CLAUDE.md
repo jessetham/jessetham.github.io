@@ -21,18 +21,20 @@ go build ./cmd/blog
 ### `blog build` — render the site once
 
 ```
-blog build [--content DIR] [--templates DIR] [--static DIR] [--out DIR]
+blog build [--content DIR] [--templates DIR] [--static DIR] [--out DIR] [--base-url URL]
 ```
 
 Reads markdown from `--content` (default `content`), parses templates from
 `--templates` (default `templates`), copies assets from `--static` (default
 `static`), and writes the site to `--out` (default `public`). Wipes
-`--out` at the start of every build.
+`--out` at the start of every build. `--base-url` (default
+`https://jtham.dev`) is the absolute origin used to build canonical links,
+the sitemap, and the feed; a trailing slash is trimmed.
 
 ### `blog serve` — local dev server with hot rebuild
 
 ```
-blog serve [--addr :8080] [--content DIR] [--templates DIR] [--static DIR] [--out DIR]
+blog serve [--addr :8080] [--content DIR] [--templates DIR] [--static DIR] [--out DIR] [--base-url URL]
 ```
 
 Runs an initial build, starts an HTTP server on `--addr`, and watches the
@@ -65,6 +67,23 @@ the build with the offending file path.
 
 Posts sort by date descending; slug-ascending breaks ties. Duplicate slugs
 fail the build.
+
+## SEO
+
+Every page renders a full `<head>`: a `<title>` (`<post> — Jesse Tham` on
+posts, `Jesse Tham` on the index), `<meta name="description">`, author,
+canonical link, Open Graph and Twitter Card tags, and JSON-LD
+(`BlogPosting` on posts, `WebSite` on the index). Descriptions are
+auto-derived from the first paragraph of the rendered body, collapsed to
+one line and truncated to ~160 characters — there is no `description`
+frontmatter field.
+
+Each build also writes three crawlability artifacts to the output root:
+`sitemap.xml` (index + every post, with `lastmod`), `robots.txt` (points
+crawlers at the sitemap), and `feed.xml` (an RSS 2.0 feed of all posts).
+All absolute URLs in these come from `--base-url`. The SEO helpers live in
+`internal/site/seo.go`; the shared per-page view model is `pageData` in
+`internal/site/render.go`.
 
 ## Layout
 

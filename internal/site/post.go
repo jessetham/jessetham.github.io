@@ -12,10 +12,11 @@ import (
 )
 
 type Post struct {
-	Slug  string
-	Title string
-	Date  time.Time
-	Body  template.HTML
+	Slug        string
+	Title       string
+	Date        time.Time
+	Body        template.HTML
+	Description string
 }
 
 func slugFromPath(p string) string {
@@ -50,11 +51,13 @@ func loadPost(path string) (Post, error) {
 	if err != nil {
 		return Post{}, err
 	}
+	rendered := template.HTML(html)
 	return Post{
-		Slug:  slugFromPath(path),
-		Title: title,
-		Date:  date,
-		Body:  template.HTML(html),
+		Slug:        slugFromPath(path),
+		Title:       title,
+		Date:        date,
+		Body:        rendered,
+		Description: deriveDescription(rendered),
 	}, nil
 }
 
