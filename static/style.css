@@ -1,3 +1,17 @@
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 :root {
   --bg: #fff;
   --fg: #111;
@@ -14,12 +28,12 @@
     --link: #6ab0ff;
   }
 }
-body { font-family: system-ui, sans-serif; max-width: 38rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; background: var(--bg); color: var(--fg); }
+body { font-family: 'Geist', system-ui, sans-serif; max-width: 38rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; background: var(--bg); color: var(--fg); }
 a { color: var(--link); }
 header a { text-decoration: none; }
 header .brand { font-weight: 600; font-size: 1.1rem; margin-right: 0.75rem; color: var(--fg); }
 article time { color: var(--muted); }
 li time { color: var(--muted); font-size: 0.9em; }
-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; }
+code { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; }
 pre { background: var(--code-bg); padding: 0.75rem 1rem; border-radius: 4px; white-space: pre-wrap; overflow-wrap: break-word; }
 pre code { background: transparent; padding: 0; border-radius: 0; }
