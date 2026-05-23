@@ -42,6 +42,7 @@ func runBuild(args []string) error {
 	fs.StringVar(&cfg.TemplatesDir, "templates", "templates", "templates directory")
 	fs.StringVar(&cfg.StaticDir, "static", "static", "static assets directory")
 	fs.StringVar(&cfg.OutDir, "out", "public", "build output directory")
+	fs.StringVar(&cfg.BaseURL, "base-url", "https://jtham.dev", "absolute site URL for canonical links, sitemap, and feed")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -56,6 +57,7 @@ func runServe(args []string) error {
 	fs.StringVar(&cfg.TemplatesDir, "templates", "templates", "templates directory")
 	fs.StringVar(&cfg.StaticDir, "static", "static", "static assets directory")
 	fs.StringVar(&cfg.OutDir, "out", "public", "build output directory")
+	fs.StringVar(&cfg.BaseURL, "base-url", "https://jtham.dev", "absolute site URL for canonical links, sitemap, and feed")
 	fs.StringVar(&addr, "addr", ":8080", "HTTP listen address")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -67,6 +69,6 @@ func runServe(args []string) error {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "usage:")
-	fmt.Fprintln(os.Stderr, "  blog build [--content DIR] [--templates DIR] [--static DIR] [--out DIR]")
-	fmt.Fprintln(os.Stderr, "  blog serve [--addr :8080] [--content DIR] [--templates DIR] [--static DIR] [--out DIR]")
+	fmt.Fprintln(os.Stderr, "  blog build [--content DIR] [--templates DIR] [--static DIR] [--out DIR] [--base-url URL]")
+	fmt.Fprintln(os.Stderr, "  blog serve [--addr :8080] [--content DIR] [--templates DIR] [--static DIR] [--out DIR] [--base-url URL]")
 }
