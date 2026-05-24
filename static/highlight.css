@@ -151,4 +151,9 @@
   /* GenericTraceback */ .chroma .gt { color: #ff7b72 }
   /* GenericUnderline */ .chroma .gl { text-decoration: underline }
   /* TextWhitespace */ .chroma .w { color: #6e7681 }
+  .chroma .bp { color: #e6edf3 }
+  .chroma .na { color: #e6edf3 }
+  .chroma .nb { color: #e6edf3 }
+  .chroma .nx { color: #e6edf3 }
+  .chroma .p { color: #e6edf3 }
 }
