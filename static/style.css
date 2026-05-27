@@ -34,6 +34,6 @@ header a { text-decoration: none; }
 header .brand { font-weight: 600; font-size: 1.1rem; margin-right: 0.75rem; color: var(--fg); }
 article time { color: var(--muted); }
 li time { color: var(--muted); font-size: 0.9em; }
-code { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; }
+code { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; font-variant-ligatures: none; }
 pre { background: var(--code-bg); padding: 0.75rem 1rem; border-radius: 4px; white-space: pre-wrap; overflow-wrap: break-word; }
 pre code { background: transparent; padding: 0; border-radius: 0; }
