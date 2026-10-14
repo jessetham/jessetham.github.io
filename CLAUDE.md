@@ -76,17 +76,15 @@ class-based — no inline styles, no client-side JS. Indented code blocks and
 inline `code` are left untouched and keep the plain `--code-bg` styling.
 
 The colours live in `static/highlight.css`, a generated file holding the
-chroma `github` and `github-dark` themes, each wrapped in its own
-`prefers-color-scheme` media query. The themes share class names, so they
-must be scoped symmetrically — leaving either at the top level lets the
-classes one theme omits inherit the other's colours. Regenerate it (e.g. to
+chroma `github-dark` theme. The site is always dark (black background,
+white text), so there is a single unscoped theme. Regenerate it (e.g. to
 change themes) with:
 
 ```bash
 go run ./cmd/genhl > static/highlight.css
 ```
 
-Edit the style names in `cmd/genhl/main.go` to pick different themes; run
+Edit the style name in `cmd/genhl/main.go` to pick a different theme; run
 `go run ./cmd/genhl` with no redirect to preview.
 
 ## SEO
