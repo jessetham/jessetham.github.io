@@ -58,7 +58,7 @@ func TestBuild_EndToEnd(t *testing.T) {
 		t.Fatalf("read index: %v", err)
 	}
 	index := string(indexBytes)
-	for _, want := range []string{"Hello, world", "Second Post", `href="/posts/hello-world/"`, `href="/posts/second-post/"`} {
+	for _, want := range []string{"Attention is all you have"} {
 		if !strings.Contains(index, want) {
 			t.Errorf("index missing %q", want)
 		}

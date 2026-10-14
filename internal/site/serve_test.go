@@ -176,8 +176,8 @@ func TestServe_ServesIndex(t *testing.T) {
 	}
 	body, _ := io.ReadAll(resp.Body)
 	resp.Body.Close()
-	if !strings.Contains(string(body), "Hello") {
-		t.Errorf("response body does not contain post title; got: %s", body)
+	if !strings.Contains(string(body), "Attention is all you have") {
+		t.Errorf("response body does not contain index text; got: %s", body)
 	}
 
 	cancel()

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark">
   <title>{{.Title}}</title>
   {{with .Description}}<meta name="description" content="{{.}}">{{end}}
   <meta name="author" content="{{.Author}}">
@@ -23,8 +23,8 @@
   <link rel="stylesheet" href="/highlight.css">
   {{with .JSONLD}}{{.}}{{end}}
 </head>
-<body>
-  <header><span class="brand">Jesse Tham</span> <a href="/">Home</a></header>
+<body{{if not .Post}} class="home"{{end}}>
+  {{if .Post}}<header><span class="brand">Jesse Tham</span> <a href="/">Home</a></header>{{end}}
   <main>{{template "body" .}}</main>
 </body>
 </html>

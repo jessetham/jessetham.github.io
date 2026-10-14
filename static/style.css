@@ -13,20 +13,11 @@
   font-display: swap;
 }
 :root {
-  --bg: #fff;
-  --fg: #111;
-  --muted: #666;
-  --code-bg: #f4f4f4;
-  --link: #06c;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1a1a1a;
-    --fg: #e8e8e8;
-    --muted: #999;
-    --code-bg: #2a2a2a;
-    --link: #6ab0ff;
-  }
+  --bg: #000;
+  --fg: #fff;
+  --muted: #999;
+  --code-bg: #1a1a1a;
+  --link: #6ab0ff;
 }
 body { font-family: 'Geist', system-ui, sans-serif; max-width: 38rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; background: var(--bg); color: var(--fg); }
 a { color: var(--link); }
@@ -37,3 +28,5 @@ li time { color: var(--muted); font-size: 0.9em; }
 code { font-family: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.9em; background: var(--code-bg); padding: 0.1em 0.3em; border-radius: 3px; font-variant-ligatures: none; }
 pre { background: var(--code-bg); padding: 0.75rem 1rem; border-radius: 4px; white-space: pre-wrap; overflow-wrap: break-word; }
 pre code { background: transparent; padding: 0; border-radius: 0; }
+body.home { margin: 0; max-width: none; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center; text-align: center; }
+body.home p { margin: 0; }
